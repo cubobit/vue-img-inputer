@@ -7,13 +7,13 @@
       <img :src="dataUrl" class="img-inputer__preview-img">
     </div>
     <label :for="readonly ? '' : inputId" class="img-inputer__label"></label>
-    <!-- 图片或文件选择后鼠标移入的提示-->
+
     <div class="img-inputer__mask" v-if="imgSelected && !noMask">
       <p class="img-inputer__file-name">{{fileName}}</p>
       <p class="img-inputer__change" v-if="readonly">{{readonlyTipText}}</p>
       <p class="img-inputer__change" v-else>{{bottomText}}</p>
     </div>
-    <!-- input主体-->
+
     <input
         ref="inputer"
         v-if="capture"
@@ -50,7 +50,7 @@
         default: 'img',
         type: String
       },
-      // 默认情况下可能会导致选择框弹出慢的问题，请针对具体化图片类型即可解决
+
       accept: {
         default: 'image/*,video/*;',
         type: String
@@ -72,15 +72,15 @@
         default: false
       },
       readonlyTipText: {
-        default: '不可更改',
+        default: 'Solo lectura',
         type: String
       },
       bottomText: {
-        default: '点击或拖拽图片以修改',
+        default: 'Haga clic o arrastre la imagen para editar',
         type: String
       },
       placeholder: {
-        default: '点击或拖拽选择图片',
+        default: 'Haga clic o arrastre para seleccionar una imagen',
         type: String
       },
       value: {
@@ -179,11 +179,9 @@
       if (this.imgSrc) {
         this.dataUrl = this.imgSrc;
       }
-      // 阻止浏览器默认的拖拽时事件
       ['dragleave', 'drop', 'dragenter', 'dragover'].forEach(e => {
         this.preventDefaultEvent(e);
       });
-      // 绑定拖拽时间
       this.addDropSupport();
     },
     methods: {
@@ -194,22 +192,18 @@
       },
       addDropSupport () {
         let BOX = this.$refs.box;
-
         BOX.addEventListener('drop', (e) => {
           e.preventDefault();
           if (this.readonly) return false;
           this.errText = '';
           let fileList = e.dataTransfer.files;
-
           if (fileList.length === 0) {
             return false;
           }
-
           if (fileList.length > 1) {
-            this.errText = '暂不支持多文件';
+            this.errText = 'No es compatible con varios archivos';
             return false
           }
-
           this.handleFileChange(fileList);
         })
       },
@@ -224,82 +218,60 @@
       handleFileChange (e) {
         if (typeof e.target === 'undefined') this.file = e[0];
         else this.file = e.target.files[0];
-
         this.errText = '';
         let size = Math.floor(this.file.size / 1024);
         if (size > this.maxSize) {
-          this.errText = `文件大小不能超过${this.sizeHumanRead}`;
+          this.errText = `El tamaño del archivo no puede exceder ${this.sizeHumanRead}`;
           return false
         }
-
-        // 双向绑定
         this.$emit('input', this.file);
-
-        // 文件选择回调 && 两种绑定方式
         this.onChange && this.onChange(this.file, this.file.name);
         this.$emit('onChange', this.file, this.file.name);
-
         this.imgPreview(this.file);
-
         this.fileName = this.file.name;
-
         this.resetInput();
       },
       imgPreview (file) {
         let self = this;
-
         if (!file || !window.FileReader) return;
-
         if (/^image/.test(file.type)) {
           let reader = new FileReader();
           reader.readAsDataURL(file);
-
           reader.onloadend = function () {
             self.dataUrl = this.result;
           }
-
         }
       },
       resetInput () {
         let input = document.getElementById(this.inputId);
         let form = document.createElement('form');
-
         document.body.appendChild(form);
-
         let parentNode = input.parentNode;
-        // 判断input 是否为最后一个节点
         let isLastNode = parentNode.lastChild === input;
         let nextSibling;
 
-        // 如果后面还有节点，则记录下一个node，做位置标志
-        // 如果本身已经是最后一个节点，则直接通过parentNode appendChild即可
         if (!isLastNode) {
           nextSibling = input.nextSibling;
         }
-
         form.appendChild(input);
         form.reset();
-
         isLastNode
           ? parentNode.appendChild(input)
           : parentNode.insertBefore(input, nextSibling);
-
         document.body.removeChild(form);
       }
     },
     watch: {
       imgSrc (newval) {
         this.dataUrl = newval;
-
         if (!newval) {
           this.file = [];
           this.errText = '';
           this.fileName = '';
         }
       },
-
       value (newval, oldval) {
-        // 重置逻辑
+        // Restablecer lógica
         if (oldval && !newval) {
           this.file = [];
           this.dataUrl = '';
